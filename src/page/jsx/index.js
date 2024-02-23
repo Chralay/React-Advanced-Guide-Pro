@@ -42,8 +42,19 @@ class Index extends React.Component{
         React.Children.forEach(flatChildren,(item)=>{
             if(React.isValidElement(item)) newChildren.push(item)
         })
+
+        // 第一二步可以合二为一，因为React.Children.forEach也有flat的功能
+        React.Children.forEach(children,(item)=>{
+            if(React.isValidElement(item)) newChildren.push(item)
+        })
+
         /* 第三步，插入新的节点 */
         const lastChildren = React.createElement(`div`,{ className :'last' } ,`say goodbye`)
+        console.log('lastChildren', lastChildren);
+        console.log('lastChildren换种写法也可以', <div className='last'>say goodbye</div>) // 意味着React element有两种写法：1、用jsx，2、用React.createElement
+        // react-api：必须将 React 元素及其 props 视为不可变，并且在创建后决不更改其内容。
+        // lastChildren.props.className = 'after' // 报错：Uncaught TypeError: Cannot assign to read only property 'className' of object '#<Object>'
+        // lastChildren.props.children = 'modified' // 报错：Uncaught TypeError: Cannot assign to read only property 'children' of object '#<Object>'
         newChildren.push(lastChildren)
         
         /* 第四步：修改容器节点 */
