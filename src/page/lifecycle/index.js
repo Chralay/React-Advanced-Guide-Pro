@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 // import ReactDOM from 'react-dom'
-// import { SyncOutlined } from '@ant-design/icons'
+import { SyncOutlined } from '@ant-design/icons'
 import './style.less'
 import { listData } from '../../mock'
 
@@ -58,19 +58,21 @@ import { listData } from '../../mock'
 // export default ()=>{
 //     const [ isRender , setRender  ] = useState(false)
 //     const [ loading , setLoading ] = useState(false)
-//     useLayoutEffect(()=>{
-//         console.log('useLayoutEffect执行')
-//     },[])
+//     const [ indexType, setIndexType ] = useState('fruit')
+//     // useLayoutEffect(()=>{
+//     //     console.log('useLayoutEffect执行')
+//     // },[])
 //     useEffect(()=>{
 //         console.log('useEffect执行')
 //     },[])
 
 //     return <div>
-//         { isRender && <Index  setLoading={setLoading} />  }
+//         { isRender && <Index  setLoading={setLoading} type={indexType} />  }
 //         <div>
 //            { loading && <SyncOutlined spin /> }
 //         </div>
 //         <button onClick={ ()=> { setRender(true) } } >渲染子组件</button>
+//         <button onClick={ ()=> { setIndexType('vegetables') } } >更改IndexType</button>
 //     </div>
 // }
 
@@ -84,41 +86,44 @@ export function debounce(fn, time) {
     };
 }
 
-//  class Index extends React.Component{
-//     constructor(props){
-//         super(props)
-//         this.state={       //① 可以用来初始化state，比如可以用来获取路由中的参数，赋值给state
-//             name:'alien',
-//             list:[]
-//         }
-//         this.handleClick = this.handleClick.bind(this) /* ② 绑定 this */
-//         this.handleInputChange = debounce(this.handleInputChange , 500) /* ③ 绑定防抖函数，防抖 500 毫秒 */
-//         // const _render = this.render
-//         // this.render = function(){
-//         //     /* ④ 劫持修改类组件上的一些生命周期 */
-//         //     return _render.bind(this)
-//         // }
-//     }
-//     /* 点击事件 */
-//     handleClick(){ /* ... */ }
-//     /* 表单输入 */
-//     handleInputChange(){ /* ... */ }
-//     UNSAFE_componentWillMount(){
-//         console.log(11)
-//     }
-    // static getDerivedStateFromProps(newProps){
-    //     const { type } = newProps
-    //     switch(type){
-    //         case 'fruit' :
-    //         return { list:['苹果','香蕉','葡萄' ] }
-    //         case 'vegetables':
-    //         return { list:['菠菜','西红柿','土豆']}
-    //     }
+class Index extends React.Component{ 
+    constructor(props){
+        super(props)
+        this.state={       //① 可以用来初始化state，比如可以用来获取路由中的参数，赋值给state
+            name:'alien',
+            list:[]
+        }
+        this.handleClick = this.handleClick.bind(this) /* ② 绑定 this */
+        this.handleInputChange = debounce(this.handleInputChange , 500) /* ③ 绑定防抖函数，防抖 500 毫秒 */
+        // const _render = this.render
+        // this.render = function(){
+        //     /* ④ 劫持修改类组件上的一些生命周期 */
+        //     return _render.bind(this)
+        // }
+    }
+    /* 点击事件 */
+    handleClick(){ /* ... */ }
+    /* 表单输入 */
+    handleInputChange(){ /* ... */ }
+    // componentWillReceiveProps(){
+    //     console.log(11)
     // }
-//     render(){
-//         return <div>{ this.state.list.map((item)=><li key={item} >{ item  }</li>) }</div>
-//     }
-// }
+    static getDerivedStateFromProps(newProps, prevState){
+        console.log('getDerivedStateFromProps state', prevState);
+        const { type } = newProps
+        switch(type){
+            case 'fruit' :
+                return { list:['苹果','香蕉','葡萄' ] }
+            case 'vegetables':
+                return { list:['菠菜','西红柿','土豆']}
+            default:
+                return { list: ['默认'] }
+        }
+    }
+    render(){
+        return <div>{ this.state.list.map((item)=><li key={item} >{ item  }</li>) }</div>
+    }
+}
 
 
 /* TODO: 生命周期 */
@@ -318,7 +323,11 @@ const fetchData = (page)=> {
 }
 
 
-class ScrollView extends React.Component{
+class ScrollView extends React.Component {
+    // 两种方式拿ref
+    divRef = React.createRef()
+    node = null
+
     /* -----自定义事件---- */
     /* 控制滚动条滚动 */
       handerScroll=(e)=>{
@@ -330,11 +339,10 @@ class ScrollView extends React.Component{
     handerScrolltolower(){
        const { scrolltolower } = this.props
        const { scrollHeight , scrollTop ,  offsetHeight } = this.node
-       if(scrollHeight === scrollTop + offsetHeight){ /* 到达容器底部位置 */
+       if(scrollHeight <= scrollTop + offsetHeight){ /* 到达容器底部位置 */
            scrolltolower && scrolltolower()
        }
     }
-    node = null
 
     /* ---——---生命周期------- */
     constructor(props) {
@@ -358,35 +366,42 @@ class ScrollView extends React.Component{
     }
     /* 获取更新前容器高度 */
     getSnapshotBeforeUpdate(){
-        return this.node.scrollHeight
+        // return this.divRef.current.scrollHeight
+        return {
+            scrollHeight: this.node.scrollHeight
+        } // 不要return this.node，这是一整个对象！
     }
     /* 获取更新后容器高度 */
     componentDidUpdate(prevProps, prevState, snapshot){
-        console.log('scrollView容器高度变化:' , this.node.scrollHeight - snapshot  )
+        // console.log('scrollView容器高度变化:' , this.divRef.current.scrollHeight - snapshot.scrollHeight)
+        console.log('scrollView容器高度变化:' , this.node.scrollHeight - snapshot.scrollHeight)
     }
     /* 绑定事件监听器 - 监听scorll事件 */
     componentDidMount() {
-        this.node.addEventListener('scroll',()=>{
-            console.log('-------滚动条滚动------')
-        })
+        console.log('DidMount', this.divRef.current);
+        // if(this.divRef.current) {
+        //     this.divRef.current.addEventListener('scroll', this.handerScroll)
+        // }
+        if(this.node) {
+            this.node.addEventListener('scroll', this.handerScroll)
+        }
     }
     /* 解绑事件监听器 */
     componentWillUnmount(){
+        console.log('WillUnmount', this.divRef.current);
+        // this.divRef.current.removeEventListener('scroll',this.handerScroll)
         this.node.removeEventListener('scroll',this.handerScroll)
     }
     render() {
         const { list } = this.state
         const { component } = this.props
-        return <div className="list_box"
-            ref={(node) => this.node = node}
-               >
-            <div >
+        return <div className="list_box" style={{border: '1px solid',height: '400px',overflow: 'auto' }}
+            ref={(node) => this.node = node}>
                 {
                     list.map((item) => (
                         React.createElement(component,{ item , key: item.id  })
                     ))
                 }
-            </div>
         </div>
     }
 }
@@ -402,7 +417,7 @@ export default function () {
             ...res,
             list:res.page === 1 ?  res.list : data.list.concat(res.list)
         }
-        console.log(payload,'payloadpayloadpayload')
+        // console.log(payload,'payloadpayloadpayload')
         if(res.code === 0) setData(payload)
     }
     /* 滚动到底部触发 */
@@ -422,3 +437,69 @@ export default function () {
            />
 
 }
+
+// 自己写的，跟答案差不多
+// class ScrollView extends React.Component {
+//     node = null;
+
+//     constructor(props) {
+//         super(props);
+//         this.state = {
+//             list: []
+//         }
+//         this.handleScrollToLower = debounce(this.handleScrollToLower, 200);
+//     }
+
+//     static getDerivedStateFromProps(newProps) {
+//         console.log('监听到props改变', newProps)
+//         return {
+//             list: newProps.data.list
+//         }
+//     }
+
+//     componentDidMount() {
+//         this.node.addEventListener('scroll', this.handleScroll)
+//     } 
+
+//     componentWillUnmount(){
+//         this.node.removeEventListener('scroll',this.handleScroll)
+//     }
+//     // shouldComponentUpdate(newProps, newState) {
+//     //     return newState.list !== this.state.list
+//     // }
+
+//     getSnapshotBeforeUpdate() {
+//         console.log('snapshot', this.node.scrollHeight);
+//         return this.node.scrollHeight;
+//     }
+
+//     componentDidUpdate(preProps, preState, snapshot) {
+//         console.log(this.node.scrollHeight, snapshot)
+//         console.log('scrollView高度增加了：', this.node.scrollHeight - snapshot)
+//     }
+
+//     handleScroll = (e) => {
+//         const {scroll} = this.props;
+//         scroll && scroll(e);
+//         this.handleScrollToLower();
+//     }
+
+//     handleScrollToLower() {
+//         const {scrolltolower} = this.props;
+//         const {scrollHeight, scrollTop, offsetHeight} = this.node;
+//         if(scrollHeight === scrollTop + offsetHeight) {
+//             scrolltolower && scrolltolower()
+//         }
+//     }
+
+//     render() {
+//         const { list } = this.state;
+//         const { component } = this.props;
+//         return <div ref={(node) => this.node = node}>
+//             { list.map(item => React.createElement(component, {
+//                 item,
+//                 key: item.id
+//             }))}
+//         </div>
+//     }
+// }
